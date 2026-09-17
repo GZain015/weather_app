@@ -20,9 +20,9 @@ class WeatherController extends Controller
     public function show(string $city) : View 
     { 
         return view('weather.show', [
-            'City' => $city,
-            'Temperature' => 30,
-            'Condiditon' => 'Partialy Clouded',
+            'city' => $city,
+            'temperature' => 30,
+            'condition' => 'Partialy Clouded',
         ]);
     }
 }
