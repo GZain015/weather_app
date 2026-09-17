@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
-use Illuminate\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\Client\ConnectionException as ClientConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class WeatherService
 {
@@ -22,6 +23,13 @@ class WeatherService
      * @return array{city: string, country: string, temperature: float, windSpeed: float, condition: string}|null
     */
     public function forCity(string $city) : ?array
+    {
+        $cacheKey = 'weather'.Str::slug($city);
+
+        return Cache::remember($cacheKey, now()->addMinutes(15), fn (): ?array => $this->fetch($city));
+    }
+    
+    public function fetch(string $city) : ?array
     {
         $location = $this->findlocation($city);
 
