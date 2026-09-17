@@ -34,12 +34,12 @@ class WeatherController extends Controller
             abort(404, "We couldn't find a city called \"{$city}\".");
         }
 
-        $current = Http::get('https://api.open-meto.com/v1/forecast', [
+        $current = Http::get('https://api.open-meteo.com/v1/forecast', [
             'latitude' => $location['latitude'],
             'longitude' => $location['longitude'],
             'current' => 'temperature_2m,weather_code,wind_speed_10m',
             'timezone' => 'auto',
-        ])
+        ])->json('current');
 
         return view('weather.show', [
             'city' => $location['name'],
