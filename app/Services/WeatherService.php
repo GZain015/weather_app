@@ -2,7 +2,11 @@
 
 namespace App\Services;
 
+use Illuminate\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
+use Illuminate\Http\Client\ConnectionException as ClientConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class WeatherService
 {
@@ -42,35 +46,44 @@ class WeatherService
 
     private function findLocation(string $city): ?array
     {
-        $response = Http::timeout(config('services.open_meteo.timeout'))
-            ->get(config('services.open_meteo.geocoding_url').'/search', [
-                'name' => $city,
-                'count' => 1,
-            ]);
-
-        if ($response->failed()) {
-            return null;
-        }
-
-        return $response->json('results.0');
+        return $this->request(config('services.open_meteo.geocoding_url').'/search', [
+            'name' => $city,
+            'count' => 1,
+        ])?->json('results.0');
     }
 
     private function currentConditions(float $latitude, float $longitude): ?array
     {
-        $response = Http::timeout(config('services.open_meteo.timeout'))
-            ->get(config('services.open_meteo.forecast_url').'/forecast', [
+        return $this->request(config('services.open_meteo.forecast_url').'/forecast', [
                 'latitude' => $latitude,
                 'longitude' => $longitude,
                 'current' => 'temperature_2m,weather_code,wind_speed_10m',
                 'timezone' => 'auto',
-            ]);
+            ])?->json('current');
+    }
 
-        if ($response->failed()) {
+    /**
+     *  @ param  array<string, mixed>  $query
+    */
+    private function request(string $url, array $query): ?Response
+    {
+        try {
+            $response = Http::timeout(config('services.open_meteo.timeout'))->get($url, $query);
+        } catch (ClientConnectionException $e){
+            Log::warning('Weather API unreachable', ['url' => $url, 'error' => $e->getMessage()]);
+
             return null;
         }
 
-        return $response->json('current');
+        if ($response->failed()) {
+            Log::warning('Weather API returned an error', ['url' => $url, 'status' => $response->status()]);
+
+            return null;
+        }
+
+        return $response;
     }
+
 
     private function describeWeatherCode(int $code): string
     {
