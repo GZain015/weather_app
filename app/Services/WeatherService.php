@@ -1,0 +1,89 @@
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+
+class WeatherService
+{
+    /**
+     * Create a new class instance.
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * @return array{city: string, country: string, temperature: float, windSpeed: float, condition: string}|null
+    */
+    public function forCity(string $city) : ?array
+    {
+        $location = $this->findlocation($city);
+
+        if ($location === null) {
+            return null;
+        }
+
+        $current = $this->currentConditions($location['latitude'], $location['longitude']);
+
+        if ($current === null) {
+            return null;
+        }
+
+        return [
+            'city' => $location['name'],
+            'country' => $location['country'],
+            'temperature' => $current['temperature_2m'],
+            'windSpeed' => $current['wind_speed_10m'],
+            'condition' => $this->describeWeatherCode($current['weather_code']),
+        ];
+    }
+
+    private function findLocation(string $city): ?array
+    {
+        $response = Http::timeout(config('services.open_meteo.timeout'))
+            ->get(config('services.open_meteo.geocoding_url').'/search', [
+                'name' => $city,
+                'count' => 1,
+            ]);
+
+        if ($response->failed()) {
+            return null;
+        }
+
+        return $response->json('results.0');
+    }
+
+    private function currentConditions(float $latitude, float $longitude): ?array
+    {
+        $response = Http::timeout(config('services.open_meteo.timeout'))
+            ->get(config('services.open_meteo.forecast_url').'/forecast', [
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'current' => 'temperature_2m,weather_code,wind_speed_10m',
+                'timezone' => 'auto',
+            ]);
+
+        if ($response->failed()) {
+            return null;
+        }
+
+        return $response->json('current');
+    }
+
+    private function describeWeatherCode(int $code): string
+    {
+        return match (true) {
+            $code === 0 => 'Clear sky',
+            in_array($code, [1, 2, 3]) => 'Partly cloudy',
+            in_array($code, [45, 48]) => 'Foggy',
+            in_array($code, [51, 53, 55, 56, 57]) => 'Drizzle',
+            in_array($code, [61, 63, 65, 66, 67, 80, 81, 82]) => 'Rain',
+            in_array($code, [71, 73, 75, 77, 85, 86]) => 'Snow',
+            in_array($code, [95, 96, 99]) => 'Thunderstorm',
+            default => 'Unknown',
+        };
+    }
+
+}
