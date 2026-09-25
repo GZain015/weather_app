@@ -47,19 +47,23 @@
 
     @if ($recentSearches->isNotEmpty())
         <section class="mt-10">
-            <h2 class="flex item-center gap-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
+            <h2 class="flex items-center gap-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
                 <x-icon name='history' class="size-4"/>
                 Recent Searches
             </h2>
 
-            <ul class="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm'>
+            <ul class="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 @foreach ($recentSearches as $search)
                     <li>
                         <a href="{{ route('weather.show', ['city' => $search->city]) }}" class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-sky-50" >
-                            <div class="min-w-0">
-                                <p class="truncate font-medium text-slate-900">{{ $search->city}}, {{ $search->country}}</p>
-                                <p class="text-sm text-slate-500">{{ $search->condition }} · {{ $search->updated_at->diffForHumans() }}</p>
-                            </div>
+                            <div class="flex min-w-0 items-center gap-3">
+                                <x-weather-icon :condition="$search->condition" class="size-8 shrink-0" />
+
+                                <div class="min-w-0">
+                                    <p class="truncate font-medium text-slate-900">{{ $search->city}}, {{ $search->country}}</p>
+                                    <p class="text-sm text-slate-500">{{ $search->condition }} · {{ $search->updated_at->diffForHumans() }}</p>
+                                </div>
+                                </div>
                             <span class="shrink-0 text-lg font-semibold text-sky-700">{{ $search->temperature }}&deg;C</span>
                         </a>
                         
