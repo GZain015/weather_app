@@ -145,16 +145,21 @@ Run two terminals while working on this lesson: `php84 artisan serve` and `npm r
 
 - Page background, a centred column (`mx-auto max-w-xl`), padding, and a header linking home.
 
-### Step 3: Style the search form and validation error
+### Step 3: Style the search form and validation error ✅
 
 - Wrap the input and button in `flex gap-2`, and place an icon inside the input with `relative` / `absolute`.
 - Change the input's colours when it has an error, using Blade's `@class([...])` directive.
 - Use `sr-only` to keep the label for screen readers while hiding it visually.
 - Use `hover:` / `focus:` variants for interaction states.
 
+### Step 4: Style the recent searches list
+
+- A white card with `rounded-xl border shadow-sm`, and `divide-y` for lines between rows.
+- Make each row one clickable link (`flex justify-between`), with the temperature pushed to the right.
+- Use `min-w-0` + `truncate` so long city names end with "…" instead of breaking the layout, and `shrink-0` so the temperature never gets squeezed.
+
 ### Next steps
 
-- Step 4: Style the recent searches list with icons (`<x-icon>`)
 - Step 5: A `<x-weather-icon>` Blade component that picks an icon from the condition
 - Step 6: Style the weather page as a card
 - Step 7: For production, run `npm run build`

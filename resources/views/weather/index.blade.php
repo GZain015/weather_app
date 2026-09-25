@@ -43,23 +43,30 @@
             </p>
         @enderror
 
-        <button type="submit">Get weather</button>
     </form>
 
     @if ($recentSearches->isNotEmpty())
-        <h2> Recent Searches</h2>
+        <section class="mt-10">
+            <h2 class="flex item-center gap-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
+                <x-icon name='history' class="size-4"/>
+                Recent Searches
+            </h2>
 
-        <ul>
-            @foreach ($recentSearches as $search)
-                <li>
-                    <a href="{{ route('weather.show', ['city' => $search->city]) }}">
-                        {{ $search->city}}, {{ $search->country}}
-                    </a>
-                    - {{ $search->temperature }}&deg;C, {{ $search->condition }}
-                    <small>({{ $search->updated_at->diffForHumans() }})</small>
-                </li>
-            @endforeach
-        </ul>
+            <ul class="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm'>
+                @foreach ($recentSearches as $search)
+                    <li>
+                        <a href="{{ route('weather.show', ['city' => $search->city]) }}" class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-sky-50" >
+                            <div class="min-w-0">
+                                <p class="truncate font-medium text-slate-900">{{ $search->city}}, {{ $search->country}}</p>
+                                <p class="text-sm text-slate-500">{{ $search->condition }} · {{ $search->updated_at->diffForHumans() }}</p>
+                            </div>
+                            <span class="shrink-0 text-lg font-semibold text-sky-700">{{ $search->temperature }}&deg;C</span>
+                        </a>
+                        
+                    </li>
+                @endforeach
+            </ul>
+        </section>
 
     @endif
 
