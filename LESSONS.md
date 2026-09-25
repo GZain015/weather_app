@@ -15,8 +15,8 @@ Run all commands from this folder (`weather_app/`), using `php84` / `composer84`
 | 5 | Call Open-Meteo | HTTP client | ✅ Done |
 | 6 | Tidy the code | Config, `.env`, service class, DI, error handling | ✅ Done |
 | 7 | Stop hammering the API | Caching | ✅ Done |
-| 8 | Save search history | Migrations, Eloquent, factories | ⬅ Current |
-| 9 | Make it look good | Tailwind 4 | |
+| 8 | Save search history | Migrations, Eloquent, factories | ✅ Done |
+| 9 | Make it look good | Tailwind 4 | ⬅ Current |
 | 10 | Prove it works | Pest tests, HTTP fakes | |
 | 11 | User favourites | Auth, relationships, policies | |
 | 12 | Background refresh | Queues, scheduled commands | |
@@ -118,7 +118,7 @@ In `WeatherController::show()`, call `Search::create([...])` **after** the 404 c
 
 **Status: ✅ done**
 
-### Step 9: One row per city (bonus)
+### Step 9: One row per city (bonus) ✅
 
 - Delete existing duplicates, keeping the newest row: `Search::whereNotIn('id', Search::selectRaw('max(id)')->groupBy('city', 'country'))->delete();`
 - Add a migration with `$table->unique(['city', 'country'])` so the database itself refuses duplicates.
@@ -126,3 +126,29 @@ In `WeatherController::show()`, call `Search::create([...])` **after** the 404 c
 - In `index()`, sort with `latest('updated_at')` so the most recently searched city comes first.
 
 ✅ Check: search Lahore 3 times, and there's still 1 Lahore row, at the top of the list.
+
+---
+
+## Lesson 9 — Make it look good with Tailwind 4
+
+**Goal:** turn the plain HTML pages into a clean, styled weather app using Tailwind utility classes, Vite and Blade components.
+
+Run two terminals while working on this lesson: `php84 artisan serve` and `npm run dev`.
+
+### Step 1: Load Tailwind through Vite ✅
+
+- Add `@vite(['resources/css/app.css', 'resources/js/app.js'])` to the `<head>` in `layouts/app.blade.php`.
+- Run `npm run dev` in a second terminal. Vite rebuilds the CSS and refreshes the browser on every save.
+- ✅ Check: the font changes to Instrument Sans and the default page margins disappear (Tailwind's reset, called Preflight).
+
+### Step 2: Style the layout
+
+- Page background, a centred column (`mx-auto max-w-xl`), padding, and a header linking home.
+
+### Next steps
+
+- Step 3: Style the search form and validation error
+- Step 4: Style the recent searches list with icons (`<x-icon>`)
+- Step 5: A `<x-weather-icon>` Blade component that picks an icon from the condition
+- Step 6: Style the weather page as a card
+- Step 7: For production, run `npm run build`
