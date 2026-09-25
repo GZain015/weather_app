@@ -240,7 +240,7 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: both pass. Remove `->withInput()` from the controller and watch the `assertSessionHasInput` line fail.
 
-### Step 6: Prove the cache works
+### Step 6: Prove the cache works ✅
 
 - `Http::fake()` also **records** every request. `Http::assertSentCount(2)` means exactly one geocoding call and one forecast call were made.
 - Test 1: search `Lahore`, view its page, then search `LAHORE`. It's still only 2 requests, because `Str::slug()` makes both spellings share one cache key.
@@ -249,8 +249,16 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: 3 pass. Change `addMinutes(15)` to `addMinutes(10)` and only the 14-minute row fails.
 
+### Step 7: The API is down
+
+- Three ways the API can fail: geocoding returns a 500, forecast returns a 503, or the connection fails (`Http::failedConnection()`). One test, three dataset rows.
+- Dataset rows are built **before Laravel boots**, so wrap each one in `fn (): array => [...]`. Pest calls the closure when the test runs.
+- Each row asserts that the user gets an error, nothing is saved, and a warning is logged.
+- `Log::spy()` records log calls without writing them. `Log::shouldHaveReceived('warning')->once()` checks one happened.
+
+✅ Check: 3 pass. Delete the `try`/`catch` in `WeatherService::request()` and the `connection timeout` row fails with a 500.
+
 ### Next steps
 
-- Step 7: API down: timeouts and 500s show a friendly error instead of crashing
 - Step 8: Test `WeatherService` directly: a dataset of weather codes → condition text
 

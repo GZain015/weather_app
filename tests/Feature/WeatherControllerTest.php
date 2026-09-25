@@ -2,6 +2,7 @@
 
 use App\Models\Search;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 // test('example', function () {
 //     $response = $this->get('/');
@@ -119,3 +120,59 @@ it('returns 404 for the weather page of a city that cannot be found', function (
 
     $response->assertNotFound();
 });
+
+
+
+it('reuses the cached weather when a city is searched again', function () {
+    fakeOpenMeteo();
+
+    $this->post(route('weather.search'), ['city' => 'Lahore']);
+    $this->get(route('weather.show', ['city' => 'Lahore']));
+    $this->post(route('weather.search'), ['city' => 'LAHORE']);
+
+    Http::assertSentCount(2);
+});
+
+it('calls the API again only after the cache expires', function (int $minutesLater, int $expectedRequests) {
+    fakeOpenMeteo();
+
+    $this->post(route('weather.search'), ['city' => 'Lahore']);
+    $this->travel($minutesLater)->minutes();
+    $this->post(route('weather.search'), ['city' => 'Lahore']);
+
+    Http::assertSentCount($expectedRequests);
+})->with([
+    'after 14 minutes, still cached' => [14, 2],
+    'after 16 minutes, fetched again' => [16, 4],
+]);
+
+
+
+it('shows an error instead of crashing when the weather API fails', function (array $fakes) {
+    Http::preventStrayRequests();
+    Http::fake($fakes);
+    Log::spy();
+
+    $response = $this->from(route('weather.index'))
+        ->post(route('weather.search'), ['city' => 'Lahore']);
+
+    $response->assertRedirect(route('weather.index'))
+        ->assertSessionHasErrors('city');
+
+    $this->assertDatabaseCount('searches', 0);
+
+    Log::shouldHaveReceived('warning')->once();
+})->with([
+    'geocoding server error' => fn (): array => [
+        'geocoding-api.open-meteo.com/v1/search*' => Http::response(status: 500),
+    ],
+    'forecast server error' => fn (): array => [
+        'geocoding-api.open-meteo.com/v1/search*' => Http::response([
+            'results' => [['name' => 'Lahore', 'country' => 'Pakistan', 'latitude' => 31.55, 'longitude' => 74.34]],
+        ]),
+        'api.open-meteo.com/v1/forecast*' => Http::response(status: 503),
+    ],
+    'connection timeout' => fn (): array => [
+        'geocoding-api.open-meteo.com/v1/search*' => Http::failedConnection(),
+    ],
+]);
