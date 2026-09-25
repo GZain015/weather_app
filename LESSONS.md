@@ -168,7 +168,7 @@ Run two terminals while working on this lesson: `php84 artisan serve` and `npm r
 
 ✅ Check: each recent search shows an icon that matches its condition, e.g. a yellow sun for "Clear sky".
 
-### Step 6: Style the weather page as a card
+### Step 6: Style the weather page as a card ✅
 
 - Rewrite the content section of `weather/show.blade.php` as one white card: a header with the city, a huge temperature and the condition, plus a large `<x-weather-icon>`. That's the Step 5 component reused at a different size.
 - Show exact temperature and wind side by side in a stats strip: `<dl class="grid grid-cols-2 divide-x">`, with `<dt>`/`<dd>` for label and value.
@@ -177,6 +177,11 @@ Run two terminals while working on this lesson: `php84 artisan serve` and `npm r
 
 ✅ Check: search a city, and the weather page shows a card with a matching icon and no layout break on a narrow window.
 
-### Next steps
+### Step 7: Build for production
 
-- Step 7: For production, run `npm run build`
+- `npm run dev` writes `public/hot`, which tells `@vite` to load files from the Vite dev server. Stop it (Ctrl+C) and the file is removed.
+- `npm run build` writes minified, hashed files to `public/build/` plus `manifest.json`. `@vite` reads the manifest to find the right filenames.
+- Tailwind only ships the classes it finds in your templates, so the CSS stays small.
+- `public/build` and `public/hot` are in `.gitignore`: build on the server, don't commit the output.
+
+✅ Check: with only `php84 artisan serve` running, the app still looks styled, and View Source shows `/build/assets/app-xxxx.css`.
