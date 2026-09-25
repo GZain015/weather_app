@@ -6,7 +6,7 @@ use App\Http\Controllers\Auth\RegisterController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/register', [RegisterController::class, 'create'])->name('register');
-    Route::get('/register', [RegisterController::class, 'store']);
+    Route::post('/register', [RegisterController::class, 'store']);
 });
 
 Route::get('/', function () {
