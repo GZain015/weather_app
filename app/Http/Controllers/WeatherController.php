@@ -18,7 +18,7 @@ class WeatherController extends Controller
     public function index(): View
     {
         return view('weather.index', [
-            'recentSearches' => Search::latest()->take(5)->get(),
+            'recentSearches' => Search::latest('updated_at')->take(5)->get(),
         ]);
     }
 
@@ -36,12 +36,10 @@ class WeatherController extends Controller
                 ->withInput();
         }
 
-        Search::create([
-            'city' => $data['city'],
-            'country' => $data['country'],
-            'temperature' => $data['temperature'],
-            'condition' => $data['condition'],
-        ]);
+        Search::updateOrCreate(
+            ['city' => $data['city'], 'country' => $data['country']],
+            ['temperature' => $data['temperature'], 'condition' => $data['condition']],
+        )->touch();
 
         return redirect()->route('weather.show', ['city' => $validated['city']]);
     }

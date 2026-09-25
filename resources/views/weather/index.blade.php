@@ -28,7 +28,7 @@
                         {{ $search->city}}, {{ $search->country}}
                     </a>
                     - {{ $search->temperature }}&deg;C, {{ $search->condition }}
-                    <small>({{ $search->created_at->diffForHumans() }})</small>
+                    <small>({{ $search->updated_at->diffForHumans() }})</small>
                 </li>
             @endforeach
         </ul>

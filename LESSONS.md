@@ -115,3 +115,14 @@ In `WeatherController::show()`, call `Search::create([...])` **after** the 404 c
 - Redirecting after the POST (Post/Redirect/Get) stops the browser from asking to "resubmit the form".
 
 ✅ Check: search once, refresh the weather page 5 times, and the count goes up by 1. An unknown city shows a red error under the input.
+
+**Status: ✅ done**
+
+### Step 9: One row per city (bonus)
+
+- Delete existing duplicates, keeping the newest row: `Search::whereNotIn('id', Search::selectRaw('max(id)')->groupBy('city', 'country'))->delete();`
+- Add a migration with `$table->unique(['city', 'country'])` so the database itself refuses duplicates.
+- In `search()`, replace `Search::create()` with `Search::updateOrCreate([...match...], [...values...])->touch();`. `touch()` bumps `updated_at` even when the weather hasn't changed.
+- In `index()`, sort with `latest('updated_at')` so the most recently searched city comes first.
+
+✅ Check: search Lahore 3 times, and there's still 1 Lahore row, at the top of the list.
