@@ -141,13 +141,19 @@ Run two terminals while working on this lesson: `php84 artisan serve` and `npm r
 - Run `npm run dev` in a second terminal. Vite rebuilds the CSS and refreshes the browser on every save.
 - ✅ Check: the font changes to Instrument Sans and the default page margins disappear (Tailwind's reset, called Preflight).
 
-### Step 2: Style the layout
+### Step 2: Style the layout ✅
 
 - Page background, a centred column (`mx-auto max-w-xl`), padding, and a header linking home.
 
+### Step 3: Style the search form and validation error
+
+- Wrap the input and button in `flex gap-2`, and place an icon inside the input with `relative` / `absolute`.
+- Change the input's colours when it has an error, using Blade's `@class([...])` directive.
+- Use `sr-only` to keep the label for screen readers while hiding it visually.
+- Use `hover:` / `focus:` variants for interaction states.
+
 ### Next steps
 
-- Step 3: Style the search form and validation error
 - Step 4: Style the recent searches list with icons (`<x-icon>`)
 - Step 5: A `<x-weather-icon>` Blade component that picks an icon from the condition
 - Step 6: Style the weather page as a card
