@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Http;
+use App\Models\Search;
 
 class WeatherController extends Controller
 {
@@ -16,13 +17,30 @@ class WeatherController extends Controller
 
     public function index(): View
     {
-        return View('weather.index');
+        return view('weather.index', [
+            'recentSearches' => Search::latest()->take(5)->get(),
+        ]);
     }
 
     public function search(Request $request) : RedirectResponse
     {
         $validated = $request->validate([
             "city" => ['required', 'string', 'min:2', 'max:60'],
+        ]);
+
+        $data = $this->weather->forCity($validated['city']);
+
+        if ($data === null) {
+            return back()
+                ->withErrors(['city' => "We couldn't find weather for \"{$validated['city']}\"."])
+                ->withInput();
+        }
+
+        Search::create([
+            'city' => $data['city'],
+            'country' => $data['country'],
+            'temperature' => $data['temperature'],
+            'condition' => $data['condition'],
         ]);
 
         return redirect()->route('weather.show', ['city' => $validated['city']]);

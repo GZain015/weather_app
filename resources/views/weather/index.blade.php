@@ -18,4 +18,21 @@
         <button type="submit">Get weather</button>
     </form>
 
+    @if ($recentSearches->isNotEmpty())
+        <h2> Recent Searches</h2>
+
+        <ul>
+            @foreach ($recentSearches as $search)
+                <li>
+                    <a href="{{ route('weather.show', ['city' => $search->city]) }}">
+                        {{ $search->city}}, {{ $search->country}}
+                    </a>
+                    - {{ $search->temperature }}&deg;C, {{ $search->condition }}
+                    <small>({{ $search->created_at->diffForHumans() }})</small>
+                </li>
+            @endforeach
+        </ul>
+
+    @endif
+
 @endsection
