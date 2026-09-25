@@ -212,7 +212,7 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: both tests pass. Then break the code on purpose: change `take(5)` to `take(6)` and watch the test fail and name the problem. Put it back afterwards.
 
-### Step 3: Validation tests with a dataset
+### Step 3: Validation tests with a dataset ✅
 
 - One test, many inputs: `->with([...])` runs the test once per row, and the row's name (`'too short'`) shows in the output.
 - `$this->from(route('weather.index'))` sets the page the request "came from", so `back()` has somewhere to redirect to.
@@ -221,11 +221,36 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: 3 dataset rows pass. Change `min:2` to `min:3` and watch only the `too short` row fail.
 
+### Step 4: Fake the Open-Meteo API ✅
+
+- `Http::fake(['url-pattern*' => Http::response([...])])` answers matching requests with your JSON. The real API is never called. `*` is a wildcard for the query string.
+- `Http::preventStrayRequests()` makes any unfaked request fail (as a 500 with `StrayRequestException`) instead of silently hitting the internet.
+- Put the fake in a helper function, `fakeOpenMeteo()`, at the top of the test file so every test can reuse it.
+- Test 1: POST `lahore`, then assert the redirect **and** `assertDatabaseHas('searches', [...])` with the API's spelling (`Lahore`) and the translated condition (`Clear sky` for code 0).
+- Test 2: GET the weather page, then `assertSeeInOrder(['Lahore', 'Pakistan', 'Clear sky', '9.2 km/h'])`.
+
+✅ Check: both pass. Comment out the `Http::fake([...])` call and see the "without a matching fake" error.
+
+### Step 5: Unknown city ✅
+
+- When nothing matches, Open-Meteo returns JSON **without** a `results` key. Fake exactly that with a second helper, `fakeUnknownCity()`, that fakes only the geocoding URL.
+- The forecast URL is deliberately not faked. If the code called it anyway, `preventStrayRequests()` would fail the test, which proves the service stops after a failed lookup.
+- POST test: `assertSessionHasErrors([...exact message...])`, `assertSessionHasInput('city', 'Atlantis')` (the form keeps what they typed), and `assertDatabaseCount('searches', 0)`.
+- GET test: `assertNotFound()`, the named version of `assertStatus(404)`.
+
+✅ Check: both pass. Remove `->withInput()` from the controller and watch the `assertSessionHasInput` line fail.
+
+### Step 6: Prove the cache works
+
+- `Http::fake()` also **records** every request. `Http::assertSentCount(2)` means exactly one geocoding call and one forecast call were made.
+- Test 1: search `Lahore`, view its page, then search `LAHORE`. It's still only 2 requests, because `Str::slug()` makes both spellings share one cache key.
+- Test 2: `$this->travel(16)->minutes()` moves the clock forward without waiting. A dataset checks both sides of the 15-minute limit: 14 minutes gives 2 requests (cached), 16 minutes gives 4 (fetched again).
+- Time travel is reset automatically after each test.
+
+✅ Check: 3 pass. Change `addMinutes(15)` to `addMinutes(10)` and only the 14-minute row fails.
+
 ### Next steps
 
-- Step 4: `Http::fake()` + `Http::preventStrayRequests()`: a successful search redirects and saves a row
-- Step 5: Unknown city: error message, nothing saved
-- Step 6: Caching: searching twice calls the API once (`Http::assertSentCount`)
 - Step 7: API down: timeouts and 500s show a friendly error instead of crashing
 - Step 8: Test `WeatherService` directly: a dataset of weather codes → condition text
 
