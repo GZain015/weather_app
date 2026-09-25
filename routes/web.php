@@ -2,6 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WeatherController;
+use App\Http\Controllers\Auth\RegisterController;
+
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [RegisterController::class, 'create'])->name('register');
+    Route::get('/register', [RegisterController::class, 'store']);
+});
 
 Route::get('/', function () {
     return view('index');

@@ -17,19 +17,9 @@ Run all commands from this folder (`weather_app/`), using `php84` / `composer84`
 | 7 | Stop hammering the API | Caching | ✅ Done |
 | 8 | Save search history | Migrations, Eloquent, factories | ✅ Done |
 | 9 | Make it look good | Tailwind 4 | ✅ Done |
-| 10 | Prove it works | Pest tests, HTTP fakes | ⬅ Current |
-| 11 | User favourites | Auth, relationships, policies | |
+| 10 | Prove it works | Pest tests, HTTP fakes | ✅ Done |
+| 11 | User favourites | Auth, relationships, policies | ⬅ Current |
 | 12 | Background refresh | Queues, scheduled commands | |
-
-## Leftover fix from Lesson 7
-
-In `app/Services/WeatherService.php`, add a colon to the cache key:
-
-```php
-$cacheKey = 'weather:'.Str::slug($city);
-```
-
----
 
 ## Lesson 8 — Migrations, Eloquent & factories
 
@@ -258,7 +248,7 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: 3 pass. Delete the `try`/`catch` in `WeatherService::request()` and the `connection timeout` row fails with a 500.
 
-### Step 8: Test `WeatherService` directly
+### Step 8: Test `WeatherService` directly ✅
 
 - `php84 artisan make:test --pest Services/WeatherServiceTest` creates `tests/Feature/Services/WeatherServiceTest.php`. The folder mirrors `app/Services/`.
 - `app(WeatherService::class)` builds the service from the container, the same way the controller gets it.
@@ -268,4 +258,31 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 - Test 3: a dataset of weather codes. Test the first and last code of each group, plus one unknown code for the `default` branch.
 
 ✅ Check: 14 pass. Then run the whole suite: `php84 artisan test --compact`.
+
+---
+
+## Lesson 11 — User favourites: auth, relationships, policies
+
+**Goal:** people can register, log in, star cities as favourites, and see only their own favourites. Built by hand (no starter kit), so you see every piece.
+
+### Step 1: Registration
+
+- `php84 artisan make:controller Auth/RegisterController` with `create()` (show the form) and `store()` (validate, create the user, log in).
+- Routes inside `Route::middleware('guest')->group(...)`: logged-in users can't reach the register page.
+- Validation: `unique:users` for email, `confirmed` (needs a `password_confirmation` field), `Password::defaults()`.
+- `User::create($validated)` stores a **hash**, never the password, because the `User` model casts `password` to `hashed`.
+- `Auth::login($user)` then `$request->session()->regenerate()`. A new session ID on login blocks session-fixation attacks.
+- `<x-form-field>` anonymous component: label + input + `@error` in one tag, reused for every field.
+
+✅ Check: register at `/register`, get redirected to `/weather`. In tinker, `User::first()->password` starts with `$2y$`.
+
+### Next steps
+
+- Step 2: Log in and log out (`Auth::attempt`, `@auth` / `@guest` in the header)
+- Step 3: `favourites` table: `foreignId('user_id')->constrained()->cascadeOnDelete()`
+- Step 4: Relationships: `User hasMany Favourite`, `Favourite belongsTo User`
+- Step 5: Star / unstar a city from the weather page (`auth` middleware)
+- Step 6: "My favourites" list: `$request->user()->favourites`
+- Step 7: A policy so nobody can delete someone else's favourite
+- Step 8: Tests: `actingAs()`, guests redirected, ownership enforced
 
