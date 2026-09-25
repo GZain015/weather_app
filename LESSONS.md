@@ -158,7 +158,7 @@ Run two terminals while working on this lesson: `php84 artisan serve` and `npm r
 - Make each row one clickable link (`flex justify-between`), with the temperature pushed to the right.
 - Use `min-w-0` + `truncate` so long city names end with "…" instead of breaking the layout, and `shrink-0` so the temperature never gets squeezed.
 
-### Step 5: A `<x-weather-icon>` component
+### Step 5: A `<x-weather-icon>` component ✅
 
 - An **anonymous component** is just a Blade file in `resources/views/components/`, with no PHP class. `weather-icon.blade.php` becomes `<x-weather-icon>`.
 - `@props(['condition'])` turns `condition="Rain"` into a `$condition` variable. Every other attribute (like `class`) lands in `$attributes`.
@@ -168,7 +168,15 @@ Run two terminals while working on this lesson: `php84 artisan serve` and `npm r
 
 ✅ Check: each recent search shows an icon that matches its condition, e.g. a yellow sun for "Clear sky".
 
+### Step 6: Style the weather page as a card
+
+- Rewrite the content section of `weather/show.blade.php` as one white card: a header with the city, a huge temperature and the condition, plus a large `<x-weather-icon>`. That's the Step 5 component reused at a different size.
+- Show exact temperature and wind side by side in a stats strip: `<dl class="grid grid-cols-2 divide-x">`, with `<dt>`/`<dd>` for label and value.
+- `round($temperature)` for the big number, `tabular-nums` so digits line up.
+- Add a back link above the card with the `arrow-left` icon.
+
+✅ Check: search a city, and the weather page shows a card with a matching icon and no layout break on a narrow window.
+
 ### Next steps
 
-- Step 6: Style the weather page as a card
 - Step 7: For production, run `npm run build`
