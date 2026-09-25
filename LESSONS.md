@@ -249,7 +249,7 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: 3 pass. Change `addMinutes(15)` to `addMinutes(10)` and only the 14-minute row fails.
 
-### Step 7: The API is down
+### Step 7: The API is down ✅
 
 - Three ways the API can fail: geocoding returns a 500, forecast returns a 503, or the connection fails (`Http::failedConnection()`). One test, three dataset rows.
 - Dataset rows are built **before Laravel boots**, so wrap each one in `fn (): array => [...]`. Pest calls the closure when the test runs.
@@ -258,7 +258,14 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: 3 pass. Delete the `try`/`catch` in `WeatherService::request()` and the `connection timeout` row fails with a 500.
 
-### Next steps
+### Step 8: Test `WeatherService` directly
 
-- Step 8: Test `WeatherService` directly: a dataset of weather codes → condition text
+- `php84 artisan make:test --pest Services/WeatherServiceTest` creates `tests/Feature/Services/WeatherServiceTest.php`. The folder mirrors `app/Services/`.
+- `app(WeatherService::class)` builds the service from the container, the same way the controller gets it.
+- `describeWeatherCode()` is private, so test it **through** the public `forCity()`, with a helper `fakeForecastWithCode(int $code)`.
+- Test 1: `expect($weather)->toBe([...])` checks the complete array the service promises (the `@return` shape).
+- Test 2: `Http::assertSent(fn (Request $request) => ...)` proves the forecast request uses the coordinates that geocoding returned.
+- Test 3: a dataset of weather codes. Test the first and last code of each group, plus one unknown code for the `default` branch.
+
+✅ Check: 14 pass. Then run the whole suite: `php84 artisan test --compact`.
 

@@ -24,7 +24,7 @@ class WeatherService
     */
     public function forCity(string $city) : ?array
     {
-        $cacheKey = 'weather'.Str::slug($city);
+        $cacheKey = 'weather:'.Str::slug($city);
 
         return Cache::remember($cacheKey, now()->addMinutes(15), fn (): ?array => $this->fetch($city));
     }
