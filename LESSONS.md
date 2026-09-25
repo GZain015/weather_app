@@ -16,8 +16,8 @@ Run all commands from this folder (`weather_app/`), using `php84` / `composer84`
 | 6 | Tidy the code | Config, `.env`, service class, DI, error handling | ✅ Done |
 | 7 | Stop hammering the API | Caching | ✅ Done |
 | 8 | Save search history | Migrations, Eloquent, factories | ✅ Done |
-| 9 | Make it look good | Tailwind 4 | ⬅ Current |
-| 10 | Prove it works | Pest tests, HTTP fakes | |
+| 9 | Make it look good | Tailwind 4 | ✅ Done |
+| 10 | Prove it works | Pest tests, HTTP fakes | ⬅ Current |
 | 11 | User favourites | Auth, relationships, policies | |
 | 12 | Background refresh | Queues, scheduled commands | |
 
@@ -177,7 +177,7 @@ Run two terminals while working on this lesson: `php84 artisan serve` and `npm r
 
 ✅ Check: search a city, and the weather page shows a card with a matching icon and no layout break on a narrow window.
 
-### Step 7: Build for production
+### Step 7: Build for production ✅
 
 - `npm run dev` writes `public/hot`, which tells `@vite` to load files from the Vite dev server. Stop it (Ctrl+C) and the file is removed.
 - `npm run build` writes minified, hashed files to `public/build/` plus `manifest.json`. `@vite` reads the manifest to find the right filenames.
@@ -185,3 +185,47 @@ Run two terminals while working on this lesson: `php84 artisan serve` and `npm r
 - `public/build` and `public/hot` are in `.gitignore`: build on the server, don't commit the output.
 
 ✅ Check: with only `php84 artisan serve` running, the app still looks styled, and View Source shows `/build/assets/app-xxxx.css`.
+
+---
+
+## Lesson 10 — Prove it works with Pest
+
+**Goal:** a test suite that proves search, validation, history, caching and error handling work, and never calls the real Open-Meteo API.
+
+Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisan test --compact --filter="recent"` (tests whose names match).
+
+### Step 1: How the test environment works ✅
+
+- `phpunit.xml` overrides `.env` during tests: `DB_DATABASE=:memory:` (a fresh SQLite database in RAM), `CACHE_STORE=array` (the cache is emptied after every test), `SESSION_DRIVER=array`.
+- `tests/Pest.php` binds every test in `tests/Feature` to Laravel's `TestCase`, which boots the app and gives you `$this->get()`, `$this->post()` and so on.
+- In `tests/Pest.php`, change the commented `->use(RefreshDatabase::class)` to `->use(LazilyRefreshDatabase::class)` and update the `use` import. Every test then starts with an empty, freshly migrated database. The "lazily" part means migrations only run for tests that actually touch the database.
+
+✅ Check: `php84 artisan test --compact` still shows 4 passing tests.
+
+### Step 2: Your first feature test: the recent searches list ✅
+
+- `php84 artisan make:test --pest WeatherControllerTest` creates `tests/Feature/WeatherControllerTest.php`.
+- Every test has three parts, separated by a blank line: **arrange** (create data with factories), **act** (make one request), **assert** (check the response).
+- Test 1: create 6 searches with different `updated_at` values, then `assertSeeInOrder([...5 newest...])` and `assertDontSee('<oldest>')`.
+- Test 2: with an empty database, `assertDontSee('Recent Searches')`.
+- Give fixed values (`'country' => 'Testland'`) to anything you assert on, so random factory data can't accidentally match.
+
+✅ Check: both tests pass. Then break the code on purpose: change `take(5)` to `take(6)` and watch the test fail and name the problem. Put it back afterwards.
+
+### Step 3: Validation tests with a dataset
+
+- One test, many inputs: `->with([...])` runs the test once per row, and the row's name (`'too short'`) shows in the output.
+- `$this->from(route('weather.index'))` sets the page the request "came from", so `back()` has somewhere to redirect to.
+- `assertSessionHasErrors(['city' => '<exact message>'])` checks the message the user actually sees, not just that some error exists.
+- `assertDatabaseCount('searches', 0)` proves a failed search saves nothing.
+
+✅ Check: 3 dataset rows pass. Change `min:2` to `min:3` and watch only the `too short` row fail.
+
+### Next steps
+
+- Step 4: `Http::fake()` + `Http::preventStrayRequests()`: a successful search redirects and saves a row
+- Step 5: Unknown city: error message, nothing saved
+- Step 6: Caching: searching twice calls the API once (`Http::assertSentCount`)
+- Step 7: API down: timeouts and 500s show a friendly error instead of crashing
+- Step 8: Test `WeatherService` directly: a dataset of weather codes → condition text
+
