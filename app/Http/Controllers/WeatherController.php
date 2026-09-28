@@ -12,10 +12,13 @@ class WeatherController extends Controller
 {
     public function __construct(private readonly WeatherService $weather) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
+        $favourites = $request->user()?->favourites()->orderBy('city')->get() ?? collect ();
+
         return view('weather.index', [
             'recentSearches' => Search::latest('updated_at')->take(5)->get(),
+            'favourites' => $favourites,
         ]);
     }
 

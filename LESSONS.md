@@ -413,9 +413,45 @@ Put it in the card header, next to the `<h1>`:
 - Double-click fast: still one row, no error.
 - Log out, then click the star: you land on `/login`. Log in, and you're back on the same weather page (click once more to save).
 
+### Step 6: "Your favourites" on the search page
+
+**Goal:** a logged-in user sees their starred cities above "Recent Searches", sorted A–Z, each linking to its weather page with a button to remove it. Guests see nothing new.
+
+#### 6a. Controller: `WeatherController::index()`
+
+- Add `Request $request` as a parameter, and pass one more key to the view:
+
+  ```php
+  'favourites' => $request->user()?->favourites()->orderBy('city')->get() ?? collect(),
+  ```
+
+  - `favourites()` **with brackets** is a query, so you can sort it in the database with `orderBy('city')`, then `get()` runs it. The property `->favourites` would load every row unsorted.
+  - A guest's `user()` is `null`, so `?->` makes the whole chain `null`. `?? collect()` swaps that for an **empty Collection**, so the view can always call `$favourites->isEmpty()` without first checking whether the user is logged in.
+- **Scoping:** the list comes from `$request->user()->favourites()`, so it only ever contains the logged-in user's rows. Never do `Favourite::all()` here: that would show everyone's favourites.
+
+#### 6b. View: `weather/index.blade.php`
+
+Add a new `<section>` between the search form and Recent Searches. Copy the Recent Searches card styling (`rounded-xl border divide-y ...`) so the two lists match.
+
+- Wrap it in `@auth ... @endauth`: guests don't get the section at all.
+- Heading: `<x-icon name="star" class="size-4" />` + "Your Favourites", styled like the "Recent Searches" `<h2>`.
+- Use **`@forelse ($favourites as $favourite) ... @empty ... @endforelse`**. It's a `@foreach` with a built-in "nothing to show" branch.
+  - Each `<li>` is a `flex` row with **two siblings**:
+    1. `<a href="{{ route('weather.show', ['city' => $favourite->city]) }}" class="min-w-0 grow ...">` with the city and country (`truncate`).
+    2. A DELETE form to `route('favourites.destroy', $favourite)` (`@csrf` + `@method('DELETE')`), with a filled star button and `aria-label="Remove {{ $favourite->city }} from favourites"`.
+  - **Don't put the form inside the `<a>`.** Interactive elements can't be nested: a click on the button would also count as a click on the link.
+  - `@empty`: a friendly hint, e.g. "Star a city on its weather page to see it here."
+- `destroy()` already returns `back()`, so removing a city from this list reloads the search page. No controller changes are needed.
+
+✅ Check:
+- Logged in, star 3 cities. The search page lists them A–Z, and each link opens its weather page.
+- Click a star in the list: that city disappears, and its weather page shows the empty star again.
+- Remove them all: the "Star a city…" hint appears.
+- Register a second account: its list is empty, and it can't see the first user's cities.
+- Log out: no favourites section at all.
+
 ### Next steps
 
-- Step 6: "My favourites" list: `$request->user()->favourites`
 - Step 7: A policy so nobody can delete someone else's favourite
 - Step 8: Tests: `actingAs()`, guests redirected, ownership enforced
 
