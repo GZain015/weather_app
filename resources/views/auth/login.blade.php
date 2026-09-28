@@ -1,11 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Login to your account')
+@section('title', 'Log in to your account')
 
 
 @section('content')
-    <h1 class="text-3xl font-bold tracking-tight text-slate-900">Login to your account</h1>
-    {{-- <p class="mt-2 text-slate-600">Save your favourite cities.</p> --}}
+    <h1 class="text-3xl font-bold tracking-tight text-slate-900">Log in to your account</h1>
 
     <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
         @csrf
@@ -19,7 +18,7 @@
         </label>
 
         <button type="submit" class="w-full rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm outline-none hover:bg-sky-700 focus:ring-4 focus:ring-sky-200">
-            Log IN
+            Log in
         </button>
     </form>
 
