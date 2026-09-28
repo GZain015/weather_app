@@ -413,7 +413,7 @@ Put it in the card header, next to the `<h1>`:
 - Double-click fast: still one row, no error.
 - Log out, then click the star: you land on `/login`. Log in, and you're back on the same weather page (click once more to save).
 
-### Step 6: "Your favourites" on the search page
+### Step 6: "Your favourites" on the search page ✅
 
 **Goal:** a logged-in user sees their starred cities above "Recent Searches", sorted A–Z, each linking to its weather page with a button to remove it. Guests see nothing new.
 
