@@ -4,8 +4,8 @@
 
 
 @section('content')
-    <h1 class="text-3xl font-bold tracking-tight text-slate-900">Create an account</h1>
-    <p class="mt-2 text-slate-600">Save your favourite cities.</p>
+    <h1 class="text-3xl font-bold tracking-tight text-slate-900">Login to your account</h1>
+    {{-- <p class="mt-2 text-slate-600">Save your favourite cities.</p> --}}
 
     <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4">
         @csrf
