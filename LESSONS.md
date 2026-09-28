@@ -276,7 +276,7 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: register at `/register`, get redirected to `/weather`. In tinker, `User::first()->password` starts with `$2y$`.
 
-### Step 2: Log in and log out
+### Step 2: Log in and log out ✅
 
 - `php84 artisan make:controller Auth/LoginController` with three methods: `create()` (show the form), `store()` (log in) and `destroy()` (log out).
 - `store()`: validate `email` + `password`, then `Auth::attempt($credentials, $request->boolean('remember'))`. It finds the user by email and checks the password against the hash. Never hash it yourself.
@@ -295,9 +295,40 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: log out, then log in with a wrong password. You see the error, and the email stays filled in but the password doesn't. Log in correctly and your name shows in the header. While logged in, `/login` sends you to `/weather`.
 
+### Step 3: The `favourites` table
+
+- `php84 artisan make:model Favourite -mf` creates the model, the migration and the factory, like `Search` in Lesson 8.
+- Migration `up()`:
+
+  ```php
+  Schema::create('favourites', function (Blueprint $table) {
+      $table->id();
+      $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+      $table->string('city');
+      $table->string('country');
+      $table->timestamps();
+
+      $table->unique(['user_id', 'city', 'country']);
+  });
+  ```
+
+  - `foreignId('user_id')` is an unsigned big integer, the same type as `users.id`.
+  - `constrained()` works out the table from the column name (`user_id` → `users.id`) and adds a **foreign key**. The database then refuses a favourite that points at a user who doesn't exist.
+  - `cascadeOnDelete()` deletes a user's favourites along with the user, so no orphan rows are left behind.
+  - `unique(['user_id', 'city', 'country'])` stops a user from starring the same city twice, but two *different* users can both star Lahore.
+  - It stores `city` + `country`, **not** a link to `searches`. `searches` is shared history that can be cleaned up at any time, and a favourite must survive that.
+- Model: `#[Fillable(['city', 'country'])]`. Leave `user_id` **out**. Otherwise someone could post `user_id=2` and create a favourite for another user. Step 5 sets it safely through the relationship.
+- Factory `definition()`: `'user_id' => User::factory()`, plus `fake()->city()` and `fake()->country()`. `User::factory()` inside a factory creates a user for each favourite, unless you pass one in.
+- `php84 artisan migrate`
+
+✅ Check in `php84 artisan tinker`:
+- `$favourite = App\Models\Favourite::factory()->create();` creates a user **and** a favourite.
+- `App\Models\Favourite::factory()->create(['user_id' => $favourite->user_id, 'city' => $favourite->city, 'country' => $favourite->country]);` throws a `UniqueConstraintViolationException`.
+- `App\Models\User::find($favourite->user_id)->delete();` then `App\Models\Favourite::count()` is `0`: the cascade worked.
+- Deleting that user was also the clean-up. Your own registered account is untouched.
+
 ### Next steps
 
-- Step 3: `favourites` table: `foreignId('user_id')->constrained()->cascadeOnDelete()`
 - Step 4: Relationships: `User hasMany Favourite`, `Favourite belongsTo User`
 - Step 5: Star / unstar a city from the weather page (`auth` middleware)
 - Step 6: "My favourites" list: `$request->user()->favourites`
