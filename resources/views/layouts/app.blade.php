@@ -13,9 +13,21 @@
                 <x-icon name="cloud-sun" class="size-6" />
                 Weather App
             </a>
-            <button type="submit" class="w-full rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm outline-none hover:bg-sky-700 focus:ring-4 focus:ring-sky-200">
-                Logout
-            </button>
+            <nav class="ml-auto flex items-center gap-4 text-sm">
+                @auth
+                    <span class="text-slate-600"> {{ auth()->user()->name }} </span>   
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="font-medium text-sky-700 hover:underline">Log out</button>
+                    </form>
+                @endauth
+
+                @guest
+                    <a href="{{ route('login') }}" class="font-medium text-sky-700 hover:underline">Log in</a>   
+                    <a href="{{ route('register') }}" class="rounded-lg bg-sky-600 px-3 py-1.5 font-medium text-white hover:bg-sky-700">Register</a>   
+                @endguest
+            </nav>
         </div>
     </header>
 
