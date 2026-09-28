@@ -327,7 +327,7 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 - `App\Models\User::find($favourite->user_id)->delete();` then `App\Models\Favourite::count()` is `0`: the cascade worked.
 - Deleting that user was also the clean-up. Your own registered account is untouched.
 
-### Step 4: Relationships
+### Step 4: Relationships ✅
 
 - In `User`, add a `favourites()` method that returns `$this->hasMany(Favourite::class)`. One user **has many** favourites.
 - In `Favourite`, add a `user()` method that returns `$this->belongsTo(User::class)`. Each favourite **belongs to** one user. "Belongs to" goes on the model whose table holds the foreign key (`favourites.user_id`).
