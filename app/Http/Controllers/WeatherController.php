@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Search;
 use App\Services\WeatherService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Support\Facades\Http;
-use App\Models\Search;
 
 class WeatherController extends Controller
 {
-
-    public function __construct(private readonly WeatherService $weather){}
-
+    public function __construct(private readonly WeatherService $weather) {}
 
     public function index(): View
     {
@@ -22,10 +19,10 @@ class WeatherController extends Controller
         ]);
     }
 
-    public function search(Request $request) : RedirectResponse
+    public function search(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            "city" => ['required', 'string', 'min:2', 'max:60'],
+            'city' => ['required', 'string', 'min:2', 'max:60'],
         ]);
 
         $data = $this->weather->forCity($validated['city']);
@@ -44,15 +41,14 @@ class WeatherController extends Controller
         return redirect()->route('weather.show', ['city' => $validated['city']]);
     }
 
-    public function show(string $city) : View 
-    { 
+    public function show(string $city): View
+    {
         $data = $this->weather->forCity($city);
 
-        if ($data=== null){
+        if ($data === null) {
             abort(404, "We couldn't find weather for \"{$city}\".");
         }
 
         return view('weather.show', $data);
     }
-
 }

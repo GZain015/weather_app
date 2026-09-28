@@ -10,19 +10,19 @@ use Illuminate\View\View;
 
 class LoginController extends Controller
 {
-    public function create() : View
+    public function create(): View
     {
         return view('auth.login');
     }
 
-    public function store(Request $request) : RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            "email" => ['required', 'email'],
-            "password" => ['required'],
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
 
-        if (Auth::attempt($validated, $request->boolean('remember'))){
+        if (Auth::attempt($validated, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             return redirect()->intended(route('weather.index'));
@@ -32,7 +32,7 @@ class LoginController extends Controller
 
     }
 
-    public function destroy(Request $request) : RedirectResponse
+    public function destroy(Request $request): RedirectResponse
     {
         Auth::logout();
 

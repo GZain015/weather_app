@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Databse\Database\Factories\SearchFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,8 +13,8 @@ class Search extends Model
     use HasFactory;
 
     /**
-        * @return array<string, string>
-    */
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
