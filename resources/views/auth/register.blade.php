@@ -20,6 +20,6 @@
         </button>
     </form>
     <p class="mt-4 text-center text-sm text-slate-600">
-        Already have an account? <a href="{{ route('login') }}" class="font-medium text-sky-700 hover:underline">Sign In</a>
+        Already have an account? <a href="{{ route('login') }}" class="font-medium text-sky-700 hover:underline">Login in</a>
     </p>
 @endsection
