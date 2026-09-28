@@ -41,7 +41,7 @@ class WeatherController extends Controller
         return redirect()->route('weather.show', ['city' => $validated['city']]);
     }
 
-    public function show(string $city): View
+    public function show(string $city, Request $request): View
     {
         $data = $this->weather->forCity($city);
 
@@ -49,6 +49,11 @@ class WeatherController extends Controller
             abort(404, "We couldn't find weather for \"{$city}\".");
         }
 
-        return view('weather.show', $data);
+        $favourite = $request->user()?->favourites()
+            ->where('city', $data['city'])
+            ->where('country', $data['country'])
+            ->first();
+
+        return view('weather.show', [...$data, 'favourite' => $favourite]);
     }
 }

@@ -358,9 +358,63 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 - `App\Models\Favourite::first()->user->email` goes the other way, from a favourite to its owner.
 - Clean up: `$user->delete();` The cascade removes their 4 favourites.
 
+### Step 5: Star / unstar a city from the weather page ✅
+
+**Goal:** a logged-in user sees a star button on the weather page. Click it to save the city, click again to remove it. Guests get sent to log in.
+
+#### 5a. Controller and routes
+
+- `php84 artisan make:controller FavouriteController` with `store()` and `destroy()`.
+- `store(Request $request): RedirectResponse`
+  - Validate `city` and `country`: `['required', 'string', 'max:100']`.
+  - `$request->user()->favourites()->firstOrCreate($validated);`
+    - Going **through the relationship** fills in `user_id` from the logged-in user. The request never decides whose favourite it is.
+    - `firstOrCreate` instead of `create`: a double-click finds the existing row, where `create` would crash on the unique index from Step 3.
+  - `return back();`
+- `destroy(Favourite $favourite): RedirectResponse`
+  - **Route model binding:** name the route parameter `{favourite}` and type-hint `Favourite $favourite`. Laravel loads the row by its ID for you, or returns a 404 if it doesn't exist.
+  - `$favourite->delete(); return back();`
+  - ⚠️ **This has a security hole on purpose:** any logged-in user can delete *anyone's* favourite by changing the ID. You'll prove it and fix it with a policy in Step 7.
+- Routes go in your existing `Route::middleware('auth')` group, next to logout:
+  - `POST /favourites` → `store`, named `favourites.store`
+  - `DELETE /favourites/{favourite}` → `destroy`, named `favourites.destroy`
+- `auth` middleware: a guest who hits these routes is redirected to `route('login')`. This is why that route name mattered in Step 2.
+
+#### 5b. Tell the page whether the city is already starred
+
+- In `WeatherController::show()`, add `Request $request` as the first parameter, then look up the favourite *after* the 404 check:
+
+  ```php
+  $favourite = $request->user()?->favourites()
+      ->where('city', $data['city'])
+      ->where('country', $data['country'])
+      ->first();
+
+  return view('weather.show', [...$data, 'favourite' => $favourite]);
+  ```
+
+  - `?->` is the **nullsafe operator**. For a guest, `user()` is `null`, so the whole chain stops and `$favourite` is `null` instead of crashing.
+  - `[...$data, 'favourite' => $favourite]` spreads the weather array and adds one more key.
+  - Use `$data['city']` (the API's spelling, e.g. `Lahore`), not the URL's `$city` (`lahore`). That's what `store()` saved.
+
+#### 5c. The star button in `weather/show.blade.php`
+
+Put it in the card header, next to the `<h1>`:
+
+- `@if ($favourite)`: a form to `route('favourites.destroy', $favourite)` with `@csrf` and **`@method('DELETE')`**, plus a filled star button: `<x-icon name="star" class="size-6 fill-current text-amber-400" />`.
+  - HTML forms can only send GET and POST. `@method('DELETE')` adds a hidden `_method` field, and Laravel treats the POST as a DELETE.
+- `@else`: a form to `route('favourites.store')` with `@csrf`, two hidden inputs (`city` and `country`), and an outline star: `<x-icon name="star" class="size-6 text-slate-400" />`.
+- Show the `@else` form to guests too. When they click it, `auth` sends them to log in, and after logging in, `intended()` brings them back **to this weather page**. For a POST, Laravel remembers the page the form was on, not the POST URL.
+- Give each button an `aria-label` ("Save to favourites" / "Remove from favourites"). An icon-only button needs one for screen readers.
+
+✅ Check:
+- Logged in, click the star: it fills in. In tinker, `App\Models\User::first()->favourites` shows the city.
+- Click it again: it empties, and the row is gone.
+- Double-click fast: still one row, no error.
+- Log out, then click the star: you land on `/login`. Log in, and you're back on the same weather page (click once more to save).
+
 ### Next steps
 
-- Step 5: Star / unstar a city from the weather page (`auth` middleware)
 - Step 6: "My favourites" list: `$request->user()->favourites`
 - Step 7: A policy so nobody can delete someone else's favourite
 - Step 8: Tests: `actingAs()`, guests redirected, ownership enforced

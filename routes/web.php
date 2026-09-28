@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\FavouriteController;
 use App\Http\Controllers\WeatherController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,8 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+    Route::post('/favourites', [FavouriteController::class, 'store'])->name('favourites.store');
+    Route::delete('/favourites/{favourite}', [FavouriteController::class, 'destroy'])->name('favourites.destroy');
 });
 
 Route::redirect('/', '/weather');

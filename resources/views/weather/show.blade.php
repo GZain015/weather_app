@@ -11,10 +11,35 @@
     <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between gap-4 p-6">
             <div class="min-w-0">
-                <h1 class="flex items-center gap-1 truncate text-2xl font-bold text-slate-900">
+                {{-- <h1 class="flex items-center gap-1 truncate text-2xl font-bold text-slate-900">
                     <x-icon name="map-pin" class="size-5 shrink-0 text-sky-600"/>
                     {{ $city }}
-                </h1>
+                </h1> --}}
+                <div class="flex items-center gap-2">
+                    <h1 class="flex min-w-0 items-center gap-1 truncate text-2xl font-bold text-slate-900">
+                        <x-icon name="map-pin" class="size-5 shrink-0 text-sky-600"/>
+                        {{ $city }}
+                    </h1>
+                
+                    @if ($favourite)
+                        <form method="POST" action="{{ route('favourites.destroy', $favourite) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" aria-label="Remove from favourites" class="rounded-lg p-1 hover:bg-amber-50">
+                                <x-icon name="star" class="size-6 fill-current text-amber-400" />
+                            </button>
+                        </form>
+                    @else
+                        <form method="POST" action="{{ route('favourites.store') }}">
+                            @csrf
+                            <input type="hidden" name="city" value="{{ $city }}">
+                            <input type="hidden" name="country" value="{{ $country }}">
+                            <button type="submit" aria-label="Save to favourites" class="rounded-lg p-1 hover:bg-slate-100">
+                                <x-icon name="star" class="size-6 text-slate-400 hover:text-amber-400" />
+                            </button>
+                        </form>
+                    @endif
+                </div>
                 <p class="text-slate-500">{{ $country}}</p>
                 <p class="mt-4 text-6xl font-bold tracking-tight text-slate-900">
                     {{ round($temperature) }}&deg;<span class="text-3xl text-slate-400">C</span>
