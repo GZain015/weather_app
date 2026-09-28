@@ -13,6 +13,9 @@
                 <x-icon name="cloud-sun" class="size-6" />
                 Weather App
             </a>
+            <button type="submit" class="w-full rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm outline-none hover:bg-sky-700 focus:ring-4 focus:ring-sky-200">
+                Logout
+            </button>
         </div>
     </header>
 
