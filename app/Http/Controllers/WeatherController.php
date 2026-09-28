@@ -41,7 +41,7 @@ class WeatherController extends Controller
         return redirect()->route('weather.show', ['city' => $validated['city']]);
     }
 
-    public function show(string $city, Request $request): View
+    public function show(Request $request, string $city): View
     {
         $data = $this->weather->forCity($city);
 
