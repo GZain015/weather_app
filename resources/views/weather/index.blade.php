@@ -47,7 +47,7 @@
 
 
     @auth
-        @if ($recentSearches->isNotEmpty())
+        @if ($favourites->isNotEmpty())
             <section class="mt-10">
                 <h2 class="flex items-center gap-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
                     <x-icon name='star' class="size-4"/>
