@@ -11,10 +11,6 @@
     <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between gap-4 p-6">
             <div class="min-w-0">
-                {{-- <h1 class="flex items-center gap-1 truncate text-2xl font-bold text-slate-900">
-                    <x-icon name="map-pin" class="size-5 shrink-0 text-sky-600"/>
-                    {{ $city }}
-                </h1> --}}
                 <div class="flex items-center gap-2">
                     <h1 class="flex min-w-0 items-center gap-1 truncate text-2xl font-bold text-slate-900">
                         <x-icon name="map-pin" class="size-5 shrink-0 text-sky-600"/>
