@@ -295,7 +295,7 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: log out, then log in with a wrong password. You see the error, and the email stays filled in but the password doesn't. Log in correctly and your name shows in the header. While logged in, `/login` sends you to `/weather`.
 
-### Step 3: The `favourites` table
+### Step 3: The `favourites` table ✅
 
 - `php84 artisan make:model Favourite -mf` creates the model, the migration and the factory, like `Search` in Lesson 8.
 - Migration `up()`:
@@ -327,9 +327,39 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 - `App\Models\User::find($favourite->user_id)->delete();` then `App\Models\Favourite::count()` is `0`: the cascade worked.
 - Deleting that user was also the clean-up. Your own registered account is untouched.
 
+### Step 4: Relationships
+
+- In `User`, add a `favourites()` method that returns `$this->hasMany(Favourite::class)`. One user **has many** favourites.
+- In `Favourite`, add a `user()` method that returns `$this->belongsTo(User::class)`. Each favourite **belongs to** one user. "Belongs to" goes on the model whose table holds the foreign key (`favourites.user_id`).
+- Eloquent guesses the keys from the names: `hasMany` looks for `user_id` on `favourites`, and `belongsTo` uses the method name `user` + `_id`. That's why naming conventions matter.
+- Return types and docblocks, so your editor and PHPStan know what comes back:
+
+  ```php
+  /**
+   * @return HasMany<Favourite, $this>
+   */
+  public function favourites(): HasMany
+  ```
+
+  Do the same for `user()` with `BelongsTo<User, $this>`. Import `Illuminate\Database\Eloquent\Relations\HasMany` / `BelongsTo`.
+- **Method vs property:** this is the key idea of the step.
+  - `$user->favourites()` (with brackets) returns a **query builder**. You can chain onto it (`->where(...)->latest()->get()`) or `->create([...])` through it.
+  - `$user->favourites` (no brackets) runs the query and returns a **Collection** of `Favourite` models. It's loaded once, then cached on the model.
+- `$user->favourites()->create(['city' => 'Lahore', 'country' => 'Pakistan'])` fills in `user_id` for you. That's why `user_id` could stay out of `#[Fillable]` in Step 3: the relationship sets it, never the request.
+- Factories understand relationships too:
+  - `User::factory()->has(Favourite::factory()->count(3))->create()` creates a user with 3 favourites.
+  - `Favourite::factory()->for($user)->create()` creates a favourite for an existing user, instead of the new user the factory would normally make.
+
+✅ Check in `php84 artisan tinker`:
+- `$user = App\Models\User::factory()->has(App\Models\Favourite::factory()->count(3))->create();`
+- `$user->favourites` shows a Collection of 3. `$user->favourites()->count()` is `3`, counted by the database.
+- `$user->favourites()->create(['city' => 'Lahore', 'country' => 'Pakistan']);` then `$user->favourites()->count()` is `4`.
+  - `$user->favourites->count()` still says `3`, because the property was loaded before. `$user->refresh()` reloads it.
+- `App\Models\Favourite::first()->user->email` goes the other way, from a favourite to its owner.
+- Clean up: `$user->delete();` The cascade removes their 4 favourites.
+
 ### Next steps
 
-- Step 4: Relationships: `User hasMany Favourite`, `Favourite belongsTo User`
 - Step 5: Star / unstar a city from the weather page (`auth` middleware)
 - Step 6: "My favourites" list: `$request->user()->favourites`
 - Step 7: A policy so nobody can delete someone else's favourite
