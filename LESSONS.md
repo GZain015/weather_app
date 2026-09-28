@@ -265,7 +265,7 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 **Goal:** people can register, log in, star cities as favourites, and see only their own favourites. Built by hand (no starter kit), so you see every piece.
 
-### Step 1: Registration
+### Step 1: Registration ✅
 
 - `php84 artisan make:controller Auth/RegisterController` with `create()` (show the form) and `store()` (validate, create the user, log in).
 - Routes inside `Route::middleware('guest')->group(...)`: logged-in users can't reach the register page.
@@ -276,9 +276,27 @@ Run tests with `php84 artisan test --compact` (the whole suite) or `php84 artisa
 
 ✅ Check: register at `/register`, get redirected to `/weather`. In tinker, `User::first()->password` starts with `$2y$`.
 
+### Step 2: Log in and log out
+
+- `php84 artisan make:controller Auth/LoginController` with three methods: `create()` (show the form), `store()` (log in) and `destroy()` (log out).
+- `store()`: validate `email` + `password`, then `Auth::attempt($credentials, $request->boolean('remember'))`. It finds the user by email and checks the password against the hash. Never hash it yourself.
+  - Success: `$request->session()->regenerate()`, then `redirect()->intended(route('weather.index'))`. `intended()` sends them back to the page they were trying to open before the login wall. Step 5 uses this.
+  - Failure: `back()->withErrors(['email' => 'These credentials do not match our records.'])->onlyInput('email')`. Use one vague message so attackers can't tell whether the email exists. `onlyInput` refills the email but never the password.
+- `destroy()`: `Auth::logout()`, then `$request->session()->invalidate()` (throws the whole session away) and `$request->session()->regenerateToken()` (a new CSRF token). Redirect to `weather.index`.
+- Routes:
+  - Add `GET /login` → `create` named **`login`** and `POST /login` → `store` to the `guest` group. The name matters: the `auth` middleware redirects guests to `route('login')`.
+  - Add `POST /logout` → `destroy` named `logout` in a `Route::middleware('auth')` group.
+  - Logout is a **POST** with `@csrf`, not a link. If it were a GET, any site could log your users out with `<img src=".../logout">`.
+- `resources/views/auth/login.blade.php`: copy the register view, keep the email and password `<x-form-field>`s, and add a "Remember me" checkbox (`name="remember"`). Link to the other page: "No account? Register", and "Already registered? Log in" on the register page.
+- Header in `layouts/app.blade.php`: add `ml-auto` to a `<nav>`.
+  - `@auth`: show `{{ auth()->user()->name }}` and a small `<form method="POST" action="{{ route('logout') }}">` with `@csrf` and a Log out button.
+  - `@guest`: show Log in / Register links.
+- `bootstrap/app.php`: `$middleware->redirectUsersTo(fn () => route('weather.index'));` inside `withMiddleware`. Without it, the `guest` middleware sends a logged-in user who opens `/login` to `/`, because there's no `dashboard` or `home` route.
+
+✅ Check: log out, then log in with a wrong password. You see the error, and the email stays filled in but the password doesn't. Log in correctly and your name shows in the header. While logged in, `/login` sends you to `/weather`.
+
 ### Next steps
 
-- Step 2: Log in and log out (`Auth::attempt`, `@auth` / `@guest` in the header)
 - Step 3: `favourites` table: `foreignId('user_id')->constrained()->cascadeOnDelete()`
 - Step 4: Relationships: `User hasMany Favourite`, `Favourite belongsTo User`
 - Step 5: Star / unstar a city from the weather page (`auth` middleware)
