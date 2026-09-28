@@ -18,11 +18,6 @@ Route::middleware('auth')->group(function () {
 
 Route::redirect('/', '/weather');
 
-// Route::get('/', function () {
-//     return view('index');
-// });
-
-// Route::get('/', [WeatherController::class, 'index'])->name('weather.index');
 Route::get('/weather', [WeatherController::class, 'index'])->name('weather.index');
 
 Route::post('/weather/search', [WeatherController::class, 'search'])->name('weather.search');
