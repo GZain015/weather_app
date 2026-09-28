@@ -46,7 +46,7 @@
     </form>
 
 
-    @auth
+    {{-- @auth
         @if ($favourites->isNotEmpty())
             <section class="mt-10">
                 <h2 class="flex items-center gap-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
@@ -74,7 +74,38 @@
                 </ul>
             </section>
         @endif
+    @endauth --}}
+
+    @auth
+        <section class="mt-10">
+            <h2 class="flex items-center gap-2 text-sm font-semibold tracking-wide text-slate-500 uppercase">
+                <x-icon name="star" class="size-4" />
+                Your Favourites
+            </h2>
+
+            <ul class="mt-3 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                @forelse ($favourites as $favourite)
+                    <li class="flex items-center gap-2 pr-2">
+                        <a href="{{ route('weather.show', ['city' => $favourite->city]) }}" class="flex min-w-0 grow items-center gap-3 px-4 py-3 hover:bg-sky-50">
+                            <x-icon name="map-pin" class="size-5 shrink-0 text-sky-600" />
+                            <span class="truncate font-medium text-slate-900">{{ $favourite->city }}, {{ $favourite->country }}</span>
+                        </a>
+
+                        <form method="POST" action="{{ route('favourites.destroy', $favourite) }}">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" aria-label="Remove {{ $favourite->city }} from favourites" class="rounded-lg p-2 hover:bg-amber-50">
+                                <x-icon name="star" class="size-5 fill-current text-amber-400" />
+                            </button>
+                        </form>
+                    </li>
+                @empty
+                    <li class="px-4 py-3 text-sm text-slate-500">Star a city on its weather page to see it here.</li>
+                @endforelse
+            </ul>
+        </section>
     @endauth
+
 
     @if ($recentSearches->isNotEmpty())
         <section class="mt-10">
