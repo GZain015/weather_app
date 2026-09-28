@@ -11,7 +11,7 @@
         @csrf
 
         <x-form-field name="email" label="Email" type="email" autocomplete="email" autofocus/>
-        <x-form-field name="password" label="Password" type="password" autocomplete="new-password" />
+        <x-form-field name="password" label="Password" type="password" autocomplete="current-password" />
         
         <label class="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" name="remember" class="rounded border-slate-300">
@@ -22,4 +22,8 @@
             Log IN
         </button>
     </form>
+
+    <p class="mt-4 text-center text-sm text-slate-600">
+        No account? <a href="{{ route('register') }}" class="font-medium text-sky-700 hover:underline">Register</a>
+    </p>
 @endsection
