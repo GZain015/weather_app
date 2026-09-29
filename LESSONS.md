@@ -450,7 +450,7 @@ Add a new `<section>` between the search form and Recent Searches. Copy the Rece
 - Register a second account: its list is empty, and it can't see the first user's cities.
 - Log out: no favourites section at all.
 
-### Step 7: A policy, so nobody can delete someone else's favourite
+### Step 7: A policy, so nobody can delete someone else's favourite ✅
 
 **Authentication** asks *who are you?* (Steps 1–2). **Authorization** asks *are you allowed to do this?* A **policy** is a class that answers that for one model.
 
@@ -501,7 +501,72 @@ Never trust an ID that comes from the browser. Anyone can edit HTML or send a re
 
 **Bonus:** a 403 admits *"this favourite exists, it's just not yours"*. To reveal nothing, return `$user->id === $favourite->user_id ? Response::allow() : Response::denyAsNotFound();` from the policy (`use Illuminate\Auth\Access\Response;`, and change the return type to `Response`). Then it's a 404, the same as an ID that doesn't exist.
 
+### Step 8: Tests for auth and favourites
+
+**Goal:** prove everything from Steps 1–7 works, so a typo like `autorize` or `constratined` fails a test instead of reaching the browser.
+
+New tools for this step:
+
+| Tool | What it does |
+|---|---|
+| `$this->actingAs($user)` | The next requests run as this user, with no login form needed |
+| `assertAuthenticated()` / `assertAuthenticatedAs($user)` / `assertGuest()` | Checks who, if anyone, is logged in afterwards |
+| `assertForbidden()` | The response is a 403 |
+| `assertModelExists($model)` / `assertModelMissing($model)` | The row is (or isn't) still in the database |
+
+The `UserFactory` gives every user the password **`password`** (already hashed), so login tests can use it.
+
+#### 8a. Share the API fake
+
+Pest helper functions are **global**. `fakeOpenMeteo()` lives in `WeatherControllerTest.php`, and a second file that declared it again would crash with "Cannot redeclare function". **Move** it (the whole function, plus `use Illuminate\Support\Facades\Http;`) to `tests/Pest.php`, replacing the example `function something()`. Every test file can then call it.
+
+✅ Check: `php84 artisan test --compact` is still 33 passing.
+
+#### 8b. `php84 artisan make:test --pest Auth/AuthenticationTest`
+
+The folder mirrors `app/Http/Controllers/Auth/`, as `Services/WeatherServiceTest` did in Lesson 10. Write:
+
+1. **Registers a new user and logs them in.** POST to `route('register')` with name, email, `password` and `password_confirmation`.
+   - `assertRedirect(route('weather.index'))` and `assertAuthenticated()`.
+   - Load the user by email and check the password was **hashed**: `expect(Hash::check('secret-pass-123', $user->password))->toBeTrue()`.
+2. **Logs in with the right password.** Create a user with the factory, POST email + `'password'`, then `assertAuthenticatedAs($user)`.
+3. **Rejects a wrong password.** Use `$this->from(route('login'))` so `back()` has somewhere to go, then:
+   - `assertRedirect(route('login'))`
+   - `assertSessionHasErrors(['email' => 'These credentials do not match our records.'])`
+   - `assertSessionHasInput('email')`, which refills the email
+   - `expect(session()->hasOldInput('password'))->toBeFalse()`, which never sends the password back
+   - `assertGuest()`
+4. **Logs out.** `actingAs($user)` → POST `route('logout')` → `assertGuest()`.
+5. **Sends logged-in users away from the login and register pages.** Use a dataset `->with(['login', 'register'])`: `actingAs($user)->get(route($page))->assertRedirect(route('weather.index'))`. This tests your `redirectUsersTo()`.
+
+#### 8c. `php84 artisan make:test --pest FavouriteTest`
+
+1. **Guests are sent to the login page.** Dataset of two requests, **store** and **destroy**, each built with `fn () => ...` like the "API is down" dataset in Lesson 10.
+   - `assertRedirect(route('login'))` and `assertDatabaseCount('favourites', …)` is unchanged.
+2. **A user can star a city.**
+   - POST city + country, then `assertRedirect()`.
+   - `assertDatabaseHas('favourites', ['user_id' => $user->id, 'city' => 'Lahore', 'country' => 'Pakistan'])`.
+3. **The request can't choose whose favourite it is.** POST with an extra `'user_id' => $otherUser->id`. The row must still belong to the **logged-in** user. Three things protect you here: `validate()` only returns the fields it checked, `user_id` isn't in `#[Fillable]`, and creating through `$request->user()->favourites()` always sets `user_id` itself.
+4. **Starring the same city twice keeps one row:** `assertDatabaseCount('favourites', 1)`.
+5. **City and country are required.** POST with nothing, then `assertSessionHasErrors(['city', 'country'])`.
+6. **The weather page shows the right star.** Call `fakeOpenMeteo()`, then:
+   - A user without the favourite sees `'Save to favourites'`.
+   - After `Favourite::factory()->for($user)->create(['city' => 'Lahore', 'country' => 'Pakistan'])`, they see `'Remove from favourites'`.
+7. **The search page lists only your own favourites, A–Z.**
+   - Yours: Paris, Lahore. Someone else's: Oslo.
+   - `assertSeeInOrder(['Lahore, Pakistan', 'Paris, France'])` and `assertDontSee('Oslo')`.
+8. **Guests don't see the favourites section:** `assertDontSee('Your Favourites')`.
+9. **An owner can remove their favourite:** `assertModelMissing($favourite)`.
+10. **Nobody can remove someone else's favourite:** `assertForbidden()` and `assertModelExists($favourite)`. This is the Step 7 attack, as a test.
+
+✅ Check:
+- The whole suite passes: `php84 artisan test --compact`.
+- Then break things on purpose, one at a time, and put each back:
+  - Comment out `Gate::authorize(...)`: only test 10 fails.
+  - In `WeatherController::index()`, swap `$request->user()?->favourites()` for `Favourite::query()`: test 7 fails, because Oslo shows up.
+  - Remove `->onlyInput('email')` from `LoginController`: test 3 in 8b fails.
+- Finish with `vendor/bin/pint`.
+
 ### Next steps
 
-- Step 8: Tests: `actingAs()`, guests redirected, ownership enforced
 

@@ -10,21 +10,21 @@ use Illuminate\Support\Facades\Log;
 //     $response->assertStatus(200);
 // });
 
-function fakeOpenMeteo(): void
-{
-    Http::preventStrayRequests();
+// function fakeOpenMeteo(): void
+// {
+//     Http::preventStrayRequests();
 
-    Http::fake([
-        'geocoding-api.open-meteo.com/v1/search*' => Http::response([
-            'results' => [
-                ['name' => 'Lahore', 'country' => 'Pakistan', 'latitude' => 31.55, 'longitude' => 74.34],
-            ],
-        ]),
-        'api.open-meteo.com/v1/forecast*' => Http::response([
-            'current' => ['temperature_2m' => 31.4, 'weather_code' => 0, 'wind_speed_10m' => 9.2],
-        ]),
-    ]);
-}
+//     Http::fake([
+//         'geocoding-api.open-meteo.com/v1/search*' => Http::response([
+//             'results' => [
+//                 ['name' => 'Lahore', 'country' => 'Pakistan', 'latitude' => 31.55, 'longitude' => 74.34],
+//             ],
+//         ]),
+//         'api.open-meteo.com/v1/forecast*' => Http::response([
+//             'current' => ['temperature_2m' => 31.4, 'weather_code' => 0, 'wind_speed_10m' => 9.2],
+//         ]),
+//     ]);
+// }
 
 
 function fakeUnknownCity(): void

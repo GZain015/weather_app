@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 /*
@@ -46,7 +47,18 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function fakeOpenMeteo(): void
 {
-    // ..
+    Http::preventStrayRequests();
+
+    Http::fake([
+        'geocoding-api.open-meteo.com/v1/search*' => Http::response([
+            'results' => [
+                ['name' => 'Lahore', 'country' => 'Pakistan', 'latitude' => 31.55, 'longitude' => 74.34],
+            ],
+        ]),
+        'api.open-meteo.com/v1/forecast*' => Http::response([
+            'current' => ['temperature_2m' => 31.4, 'weather_code' => 0, 'wind_speed_10m' => 9.2],
+        ]),
+    ]);
 }
