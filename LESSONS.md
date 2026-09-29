@@ -450,8 +450,58 @@ Add a new `<section>` between the search form and Recent Searches. Copy the Rece
 - Register a second account: its list is empty, and it can't see the first user's cities.
 - Log out: no favourites section at all.
 
+### Step 7: A policy, so nobody can delete someone else's favourite
+
+**Authentication** asks *who are you?* (Steps 1–2). **Authorization** asks *are you allowed to do this?* A **policy** is a class that answers that for one model.
+
+#### 7a. Prove the hole first
+
+1. In tinker, create a favourite for somebody else and note its ID:
+   `App\Models\Favourite::factory()->create(['city' => 'Oslo', 'country' => 'Norway'])->id`
+2. In the browser, log in as **your** account, star any city, and open the search page.
+3. Open DevTools (F12) → Elements. Find your remove form: `<form method="POST" action=".../favourites/1">`. Double-click the action and change the number to Oslo's ID.
+4. Click that star. Then, in tinker, `App\Models\Favourite::where('city', 'Oslo')->exists()` returns `false`: you deleted someone else's data.
+
+Never trust an ID that comes from the browser. Anyone can edit HTML or send a request by hand.
+
+#### 7b. Write the policy
+
+- `php84 artisan make:policy FavouritePolicy` creates `app/Policies/FavouritePolicy.php`. Leave off `--model`: it would generate 7 stub methods, and you only need one.
+- Add a `delete()` method:
+
+  ```php
+  public function delete(User $user, Favourite $favourite): bool
+  {
+      return $user->id === $favourite->user_id;
+  }
+  ```
+
+  - Laravel passes in the **logged-in user** automatically. You only pass the favourite.
+  - Use `===` (strict), so `1 === '1'` can't sneak past.
+- **Policy discovery:** there's nothing to register. `Favourite` model + `App\Policies\FavouritePolicy` is the naming convention Laravel looks for.
+
+#### 7c. Use it in `FavouriteController::destroy()`
+
+- As the **first line**, before the delete:
+
+  ```php
+  Gate::authorize('delete', $favourite);
+  ```
+
+  (`use Illuminate\Support\Facades\Gate;`)
+- It finds `FavouritePolicy` from the model's class, calls `delete($currentUser, $favourite)`, and if that returns `false`, it throws an exception. Laravel turns that into a **403 Forbidden** page, and the delete line never runs.
+- Other ways to call the same policy, for reference:
+  - On the route: `->can('delete', 'favourite')`. It runs before the controller at all.
+  - In Blade: `@can('delete', $favourite) ... @endcan` hides a button the user isn't allowed to use. It's handy for display, but it's **not** protection on its own: the route must still check.
+
+✅ Check:
+- Repeat 7a with a new Oslo favourite. You now get a **403** page, and `Favourite::where('city', 'Oslo')->exists()` is still `true`.
+- Removing your **own** favourites still works, from both the weather page and the search page.
+- Clean up Oslo: `App\Models\Favourite::where('city', 'Oslo')->first()->user->delete();` deletes the factory user, and the cascade removes Oslo.
+
+**Bonus:** a 403 admits *"this favourite exists, it's just not yours"*. To reveal nothing, return `$user->id === $favourite->user_id ? Response::allow() : Response::denyAsNotFound();` from the policy (`use Illuminate\Auth\Access\Response;`, and change the return type to `Response`). Then it's a 404, the same as an ID that doesn't exist.
+
 ### Next steps
 
-- Step 7: A policy so nobody can delete someone else's favourite
 - Step 8: Tests: `actingAs()`, guests redirected, ownership enforced
 

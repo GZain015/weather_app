@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Favourite;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class FavouriteController extends Controller
 {
@@ -22,9 +23,10 @@ class FavouriteController extends Controller
 
     public function destroy(Favourite $favourite): RedirectResponse
     {
+        Gate::authorize('delete', $favourite);
+
         $favourite->delete();
 
         return back();
     }
-
 }
